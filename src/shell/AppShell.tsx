@@ -6,6 +6,7 @@ import { Stats } from '../screens/Stats'
 import { Share } from '../screens/Share'
 import { More } from '../screens/More'
 import { Contacts } from '../contacts/Contacts'
+import { ImportContacts } from '../contacts/ImportContacts'
 import { CourtBackground } from '../ui/CourtBackground'
 
 export function AppShell() {
@@ -19,6 +20,7 @@ export function AppShell() {
         <Route path="/share" element={<Share />} />
         <Route path="/more" element={<More />} />
         <Route path="/contacts" element={<Contacts />} />
+        <Route path="/contacts/import" element={<ImportContacts />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <BottomNav />

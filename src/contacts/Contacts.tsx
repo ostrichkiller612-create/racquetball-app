@@ -18,12 +18,20 @@ export function Contacts() {
       {adding ? (
         <ContactForm onSubmit={addContact} onCancel={() => setAdding(false)} />
       ) : (
-        <button
-          onClick={() => setAdding(true)}
-          className="w-full rounded bg-emerald-600 text-white py-2 font-medium"
-        >
-          + Add contact
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setAdding(true)}
+            className="flex-1 rounded bg-emerald-600 text-white py-2 font-medium"
+          >
+            + Add
+          </button>
+          <Link
+            to="/contacts/import"
+            className="flex-1 rounded border border-emerald-500 bg-white py-2 font-medium text-center text-emerald-700"
+          >
+            📷 From photo
+          </Link>
+        </div>
       )}
 
       {loading ? (
