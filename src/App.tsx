@@ -1,10 +1,7 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { SignIn } from './auth/SignIn'
 import { ProtectedRoute } from './auth/ProtectedRoute'
-
-function Placeholder({ name }: { name: string }) {
-  return <div className="p-6 text-xl">{name} (coming soon)</div>
-}
+import { AppShell } from './shell/AppShell'
 
 export default function App() {
   return (
@@ -14,11 +11,10 @@ export default function App() {
         path="/*"
         element={
           <ProtectedRoute>
-            <Placeholder name="App shell placeholder" />
+            <AppShell />
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
