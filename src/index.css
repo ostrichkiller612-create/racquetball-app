@@ -3,4 +3,10 @@
 @tailwind utilities;
 
 html, body, #root { height: 100%; }
-body { @apply bg-slate-50 text-slate-900 antialiased; }
+body { @apply bg-slate-900 text-slate-100 antialiased; }
+
+/* Anything painted on a white card surface gets dark text. */
+.bg-white { color: rgb(15 23 42); }
+
+/* Keep bottom nav crisp on top of the court background. */
+nav.fixed { backdrop-filter: blur(6px); }

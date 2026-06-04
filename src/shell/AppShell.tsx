@@ -6,10 +6,12 @@ import { Stats } from '../screens/Stats'
 import { Share } from '../screens/Share'
 import { More } from '../screens/More'
 import { Contacts } from '../contacts/Contacts'
+import { CourtBackground } from '../ui/CourtBackground'
 
 export function AppShell() {
   return (
     <div className="min-h-full pb-16">
+      <CourtBackground />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/log" element={<Log />} />
