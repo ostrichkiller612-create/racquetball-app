@@ -1,3 +1,5 @@
+import { Stats as StatsView } from '../matches/Stats'
+
 export function Stats() {
-  return <div className="p-6 text-xl font-semibold">Stats</div>
+  return <StatsView />
 }
