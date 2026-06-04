@@ -1,3 +1,26 @@
+import { Link } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+
 export function More() {
-  return <div className="p-6 text-xl font-semibold">More</div>
+  async function signOut() {
+    await supabase.auth.signOut()
+  }
+
+  return (
+    <div className="p-4 space-y-2">
+      <h1 className="text-xl font-semibold mb-4">More</h1>
+      <Link
+        to="/contacts"
+        className="block bg-white rounded-2xl shadow p-4 font-medium"
+      >
+        Contacts
+      </Link>
+      <button
+        onClick={signOut}
+        className="block w-full text-left bg-white rounded-2xl shadow p-4 font-medium text-red-600"
+      >
+        Sign out
+      </button>
+    </div>
+  )
 }

@@ -5,6 +5,7 @@ import { Log } from '../screens/Log'
 import { Stats } from '../screens/Stats'
 import { Share } from '../screens/Share'
 import { More } from '../screens/More'
+import { Contacts } from '../contacts/Contacts'
 
 export function AppShell() {
   return (
@@ -15,6 +16,7 @@ export function AppShell() {
         <Route path="/stats" element={<Stats />} />
         <Route path="/share" element={<Share />} />
         <Route path="/more" element={<More />} />
+        <Route path="/contacts" element={<Contacts />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <BottomNav />
