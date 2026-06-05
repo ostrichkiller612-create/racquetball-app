@@ -5,12 +5,18 @@ export type Match = {
   id: string
   league_id: string | null
   match_date: string
+  match_type: 'singles' | 'cutthroat' | 'doubles'
   player1_user_id: string | null
   player1_contact_id: string | null
   player2_user_id: string | null
   player2_contact_id: string | null
+  player3_user_id: string | null
+  player3_contact_id: string | null
+  player4_user_id: string | null
+  player4_contact_id: string | null
   player1_games_won: number
   player2_games_won: number
+  winner_position: number | null
   notes: string | null
   entered_by: string
   created_at: string

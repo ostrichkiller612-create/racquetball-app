@@ -1,3 +1,5 @@
+import type { Match } from '../matches/useMatches'
+
 export type Points = [number, number]
 
 export function matchPoints(p1Games: number, p2Games: number): Points {
@@ -114,4 +116,32 @@ export function leagueStandings(
   return Array.from(byId.values()).sort(
     (a, b) => b.points - a.points || a.name.localeCompare(b.name),
   )
+}
+
+export function didIWin(match: Match, userId: string): boolean {
+  if (match.match_type === 'singles') {
+    if (match.player1_user_id === userId) {
+      return match.player1_games_won > match.player2_games_won
+    }
+    if (match.player2_user_id === userId) {
+      return match.player2_games_won > match.player1_games_won
+    }
+    return false
+  }
+  if (match.match_type === 'cutthroat') {
+    const myPos =
+      match.player1_user_id === userId ? 1
+      : match.player2_user_id === userId ? 2
+      : match.player3_user_id === userId ? 3
+      : null
+    return myPos !== null && match.winner_position === myPos
+  }
+  if (match.match_type === 'doubles') {
+    const myTeam =
+      match.player1_user_id === userId || match.player2_user_id === userId ? 1
+      : match.player3_user_id === userId || match.player4_user_id === userId ? 2
+      : null
+    return myTeam !== null && match.winner_position === myTeam
+  }
+  return false
 }
