@@ -130,7 +130,18 @@ export function ThisWeekCard() {
   if (!up) return null
 
   const time = up.start_time ? up.start_time.slice(0, 5) : ''
-  const when = `${up.match_date}${time ? ` @ ${time}` : ''}`
+  // Friendly date: "Thursday, June 11" (no timezone fuss — parse as local from YYYY-MM-DD parts)
+  const friendlyDate = (() => {
+    const [y, m, d] = up.match_date.split('-').map(Number)
+    if (!y || !m || !d) return up.match_date
+    const dt = new Date(y, m - 1, d)
+    return dt.toLocaleDateString(undefined, {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    })
+  })()
+  const when = `${friendlyDate}${time ? ` at ${time}` : ''}`
   const href = up.opponent_phone
     ? buildSmsHref({
         phone: up.opponent_phone,
@@ -138,7 +149,7 @@ export function ThisWeekCard() {
         vars: {
           name: up.opponent_name.split(' ')[0],
           when,
-          date: up.match_date,
+          date: friendlyDate,
           time,
           court: up.court ?? '',
         },
