@@ -21,6 +21,12 @@ export function More() {
       >
         Leagues
       </Link>
+      <Link
+        to="/profile"
+        className="block bg-white rounded-2xl shadow p-4 font-medium"
+      >
+        Profile
+      </Link>
       <button
         onClick={signOut}
         className="block w-full text-left bg-white rounded-2xl shadow p-4 font-medium text-red-600"

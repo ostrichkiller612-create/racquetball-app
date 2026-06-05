@@ -5,6 +5,7 @@ import { useLeagues } from './useLeagues'
 import { useLeagueMembers } from './useLeagueMembers'
 import { MemberForm } from './MemberForm'
 import { Standings } from './Standings'
+import { ScheduleEditor } from './ScheduleEditor'
 
 export function League() {
   const { id } = useParams<{ id: string }>()
@@ -31,6 +32,8 @@ export function League() {
       </div>
 
       <Standings leagueId={id} members={members} />
+
+      <ScheduleEditor leagueId={id} members={members} isAdmin={isAdmin} />
 
       <div className="bg-white rounded-2xl shadow">
         <div className="px-4 py-2 text-sm font-medium text-slate-600 border-b flex items-center justify-between">

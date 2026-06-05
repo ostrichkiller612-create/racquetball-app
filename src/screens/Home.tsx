@@ -2,6 +2,7 @@ import { useAuth } from '../auth/useAuth'
 import { useContacts } from '../contacts/useContacts'
 import { useMatches } from '../matches/useMatches'
 import { MatchHistory } from '../matches/MatchHistory'
+import { ThisWeekCard } from '../home/ThisWeekCard'
 
 export function Home() {
   const { session } = useAuth()
@@ -20,6 +21,7 @@ export function Home() {
 
   return (
     <div className="p-4 space-y-4">
+      <ThisWeekCard />
       <div className="bg-white rounded-2xl shadow p-4">
         <div className="text-sm text-slate-500">Your record</div>
         <div className="text-3xl font-bold">{wins}–{losses}</div>

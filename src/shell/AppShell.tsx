@@ -9,6 +9,7 @@ import { Contacts } from '../contacts/Contacts'
 import { ImportContacts } from '../contacts/ImportContacts'
 import { Leagues } from '../leagues/Leagues'
 import { League } from '../leagues/League'
+import { ProfileEdit } from '../profile/ProfileEdit'
 import { CourtBackground } from '../ui/CourtBackground'
 
 export function AppShell() {
@@ -25,6 +26,7 @@ export function AppShell() {
         <Route path="/contacts/import" element={<ImportContacts />} />
         <Route path="/leagues" element={<Leagues />} />
         <Route path="/leagues/:id" element={<League />} />
+        <Route path="/profile" element={<ProfileEdit />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <BottomNav />
