@@ -50,3 +50,68 @@ export function summarizeHeadToHead(matches: MatchSummary[], _userId: string): H
 
   return { overall, perOpponent }
 }
+
+export type LeagueMemberInput = {
+  id: string
+  name: string
+  seed_number: number
+}
+
+export type LeagueMatchInput = {
+  player1_id: string
+  player2_id: string
+  player1_games: number
+  player2_games: number
+}
+
+export type LeagueStanding = {
+  id: string
+  name: string
+  seed_number: number
+  played: number
+  wins: number
+  losses: number
+  points: number
+}
+
+export function leagueStandings(
+  members: LeagueMemberInput[],
+  matches: LeagueMatchInput[],
+): LeagueStanding[] {
+  const byId = new Map<string, LeagueStanding>()
+  for (const m of members) {
+    byId.set(m.id, {
+      id: m.id,
+      name: m.name,
+      seed_number: m.seed_number,
+      played: 0,
+      wins: 0,
+      losses: 0,
+      points: 0,
+    })
+  }
+
+  for (const match of matches) {
+    const p1 = byId.get(match.player1_id)
+    const p2 = byId.get(match.player2_id)
+    if (!p1 || !p2) continue
+    if (match.player1_games === match.player2_games) continue
+
+    const [pts1, pts2] = matchPoints(match.player1_games, match.player2_games)
+    p1.played += 1
+    p2.played += 1
+    p1.points += pts1
+    p2.points += pts2
+    if (match.player1_games > match.player2_games) {
+      p1.wins += 1
+      p2.losses += 1
+    } else {
+      p2.wins += 1
+      p1.losses += 1
+    }
+  }
+
+  return Array.from(byId.values()).sort(
+    (a, b) => b.points - a.points || a.name.localeCompare(b.name),
+  )
+}
