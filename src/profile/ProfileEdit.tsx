@@ -10,7 +10,7 @@ export function ProfileEdit() {
   const [displayName, setDisplayName] = useState('')
   const [phone, setPhone] = useState('')
   const [template, setTemplate] = useState(
-    'Hey {name}, confirming our match {when}?',
+    "Hey just verifying our match for {date}. sent via Jim's racquetball app",
   )
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -98,8 +98,7 @@ export function ProfileEdit() {
             className="mt-1 block w-full rounded border border-slate-300 px-3 py-2"
           />
           <span className="block text-xs text-slate-500 mt-1">
-            Use {'{name}'} and {'{when}'} as placeholders — they'll be filled in
-            when you tap "Text opponent" on Home.
+            Placeholders you can use: {'{name}'}, {'{date}'}, {'{time}'}, {'{court}'}, {'{when}'} (date + time combined).
           </span>
         </label>
         <button

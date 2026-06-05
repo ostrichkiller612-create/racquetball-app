@@ -18,7 +18,7 @@ export function ThisWeekCard() {
   const [up, setUp] = useState<Upcoming | null>(null)
   const [loading, setLoading] = useState(true)
   const [template, setTemplate] = useState(
-    'Hey {name}, confirming our match {when}?',
+    "Hey just verifying our match for {date}. sent via Jim's racquetball app",
   )
 
   useEffect(() => {
@@ -129,12 +129,19 @@ export function ThisWeekCard() {
   }
   if (!up) return null
 
-  const when = `${up.match_date}${up.start_time ? ` @ ${up.start_time.slice(0, 5)}` : ''}`
+  const time = up.start_time ? up.start_time.slice(0, 5) : ''
+  const when = `${up.match_date}${time ? ` @ ${time}` : ''}`
   const href = up.opponent_phone
     ? buildSmsHref({
         phone: up.opponent_phone,
         template,
-        vars: { name: up.opponent_name.split(' ')[0], when },
+        vars: {
+          name: up.opponent_name.split(' ')[0],
+          when,
+          date: up.match_date,
+          time,
+          court: up.court ?? '',
+        },
       })
     : null
 
