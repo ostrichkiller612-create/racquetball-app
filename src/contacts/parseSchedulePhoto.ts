@@ -2,52 +2,68 @@
  * Parses raw OCR text from a photo of a league schedule sheet
  * into a list of {name, phone} rows.
  *
- * Expected input shape per line (rough):
- *   "1  James Herrington  462-0214"
- *   "2 Bill Boulden 510-4811"
- *   "8 Jonelle Gordon  347-805-3588"
+ * Strategy: scan the WHOLE text for phone-number patterns (not just per-line —
+ * Tesseract often jams rows together or splits them oddly). For each phone
+ * match, the name is whatever text sits between the previous phone (or start)
+ * and this phone, with seed numbers and noise stripped.
  *
- * OCR is noisy — this is intentionally forgiving:
- *   - Strips a leading seed number (1-99) when present
- *   - Tolerates whitespace variation, mixed dashes/spaces in phone numbers
- *   - Skips lines without a phone-like pattern
+ * The phone pattern accepts dashes/spaces/dots/unicode-dashes between digit
+ * groups, and area-code-prefix is optional. We also accept a run of 10 or 7
+ * digits with no separator at all.
  */
 export type ParsedContact = {
   name: string
   phone: string | null
 }
 
-const PHONE_PATTERN = /(\(?\d{3}\)?[-.\s]?)?\d{3}[-.\s]\d{4}/
+// Any common separator OCR might emit between digit groups (ASCII hyphen,
+// en-dash, em-dash, hyphen-minus, dot, middle-dot, underscore, whitespace,
+// or nothing).
+const SEP = `[\\s\\-–—‐‑‒.·_]*`
+
+// Match either: (XXX) XXX-XXXX style OR XXX-XXX-XXXX OR XXX-XXXX (7 digits)
+const PHONE_RE = new RegExp(
+  `(?:\\(?\\d{3}\\)?${SEP})?\\d{3}${SEP}\\d{4}`,
+  'g',
+)
 
 export function parseSchedulePhoto(text: string): ParsedContact[] {
-  const lines = text
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-
   const rows: ParsedContact[] = []
   const seenNames = new Set<string>()
+  const seenPhones = new Set<string>()
 
-  for (const rawLine of lines) {
-    const phoneMatch = rawLine.match(PHONE_PATTERN)
-    if (!phoneMatch) continue
+  let lastEnd = 0
+  for (const match of text.matchAll(PHONE_RE)) {
+    const phoneRaw = match[0]
+    const phone = normalizePhone(phoneRaw)
 
-    const phone = normalizePhone(phoneMatch[0])
-    const beforePhone = rawLine.slice(0, phoneMatch.index ?? 0).trim()
+    // Skip phones with too few or too many digits to be a real US number
+    const digitCount = phoneRaw.replace(/\D/g, '').length
+    if (digitCount !== 7 && digitCount !== 10) {
+      lastEnd = (match.index ?? 0) + phoneRaw.length
+      continue
+    }
 
-    // Strip a leading seed number like "1" or "10" if present.
-    const name = beforePhone
-      .replace(/^\d{1,2}[\s).:|-]+/, '')
-      .replace(/\s+/g, ' ')
-      .trim()
+    // Skip if we've already seen this exact phone (duplicate scan or repeat)
+    if (phone && seenPhones.has(phone)) {
+      lastEnd = (match.index ?? 0) + phoneRaw.length
+      continue
+    }
+
+    // Pull the slice of text between the last phone (or start) and this phone
+    // — that's where the name lives.
+    const between = text.slice(lastEnd, match.index ?? 0)
+    const name = cleanName(between)
+
+    lastEnd = (match.index ?? 0) + phoneRaw.length
 
     if (!name) continue
-    // Reject obvious garbage names — at least 2 chars, must contain a letter.
     if (name.length < 2 || !/[A-Za-z]/.test(name)) continue
 
     const key = name.toLowerCase()
     if (seenNames.has(key)) continue
     seenNames.add(key)
+    if (phone) seenPhones.add(phone)
 
     rows.push({ name, phone })
   }
@@ -55,8 +71,30 @@ export function parseSchedulePhoto(text: string): ParsedContact[] {
   return rows
 }
 
+function cleanName(raw: string): string {
+  // Take the last "line" of the chunk (helps when OCR jams junk in front).
+  let s = raw.replace(/\r/g, '').split('\n').pop() ?? raw
+
+  // Drop a leading seed number like "1", "10.", "10)", "10:", "10 -"
+  s = s.replace(/^\s*\d{1,3}[\s.):|\-–—]+/, '')
+
+  // Collapse runs of whitespace
+  s = s.replace(/\s+/g, ' ').trim()
+
+  // Strip trailing punctuation
+  s = s.replace(/[\s,.;:|\-–—]+$/g, '').trim()
+
+  // Strip leading punctuation
+  s = s.replace(/^[\s,.;:|\-–—]+/, '').trim()
+
+  // If the chunk has multiple "words" but starts with a long header word
+  // like "Name" or "Phone" (common in printed table headers), drop it.
+  s = s.replace(/^(Name|Phone|Player|Roster)\b[:\s]*/i, '').trim()
+
+  return s
+}
+
 function normalizePhone(raw: string): string {
-  // Collapse to digits then re-format as XXX-XXX-XXXX or XXX-XXXX.
   const digits = raw.replace(/\D/g, '')
   if (digits.length === 10) {
     return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`

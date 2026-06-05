@@ -21,15 +21,26 @@ Name  Phone
     expect(rows).toHaveLength(10)
     expect(rows[0]).toEqual({ name: 'James Herrington', phone: '462-0214' })
     expect(rows[7]).toEqual({ name: 'Jonelle Gordon', phone: '347-805-3588' })
+    expect(rows[9]).toEqual({ name: 'Dave Marotto', phone: '713-8105' })
   })
 
-  it('skips lines without a phone', () => {
-    const text = `Header line
-Just a name with no phone
-2 Bob Smith 555-1234`
+  it('handles rows jammed onto one line (no newlines)', () => {
+    const text = `1 James Herrington 462-0214 2 Bill Boulden 510-4811 3 Stanley Coleman 390-2950`
     const rows = parseSchedulePhoto(text)
-    expect(rows).toHaveLength(1)
-    expect(rows[0].name).toBe('Bob Smith')
+    expect(rows).toHaveLength(3)
+    expect(rows.map((r) => r.name)).toEqual([
+      'James Herrington',
+      'Bill Boulden',
+      'Stanley Coleman',
+    ])
+  })
+
+  it('accepts unicode dashes from OCR', () => {
+    const text = `1 Alice 555–1234
+2 Bob 555—5678
+3 Carol 555-9012`
+    const rows = parseSchedulePhoto(text)
+    expect(rows.map((r) => r.phone)).toEqual(['555-1234', '555-5678', '555-9012'])
   })
 
   it('handles dot- and space-separated phones', () => {
@@ -49,6 +60,14 @@ Just a name with no phone
     expect(rows.map((r) => r.name)).toEqual(['Alice', 'Bob', 'Carol'])
   })
 
+  it('skips header words like "Name" or "Phone"', () => {
+    const text = `Name Phone
+1 Alice 555-1234`
+    const rows = parseSchedulePhoto(text)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].name).toBe('Alice')
+  })
+
   it('deduplicates by name (case-insensitive)', () => {
     const text = `1 Alice 555-1111
 2 alice 555-2222
@@ -60,5 +79,13 @@ Just a name with no phone
   it('returns empty array for unparseable input', () => {
     expect(parseSchedulePhoto('')).toEqual([])
     expect(parseSchedulePhoto('just garbage no phones here')).toEqual([])
+  })
+
+  it('skips digit groups that are not phone-shaped (e.g. dates)', () => {
+    const text = `League starts 1/15/25
+1 Alice 555-1234`
+    const rows = parseSchedulePhoto(text)
+    expect(rows).toHaveLength(1)
+    expect(rows[0].phone).toBe('555-1234')
   })
 })
