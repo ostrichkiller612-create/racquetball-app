@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { buildMatchRow } from './buildMatchRow'
 
 export type Match = {
   id: string
@@ -22,15 +23,39 @@ export type Match = {
   created_at: string
 }
 
-export type NewMatchInput = {
-  match_date: string
-  league_id?: string | null
-  opponent_contact_id?: string | null
-  opponent_user_id?: string | null
-  your_games: number
-  their_games: number
-  notes: string | null
-}
+export type NewMatchInput =
+  | {
+      type: 'singles'
+      match_date: string
+      league_id?: string | null
+      opponent_contact_id?: string | null
+      opponent_user_id?: string | null
+      your_games: number
+      their_games: number
+      notes: string | null
+    }
+  | {
+      type: 'cutthroat'
+      match_date: string
+      opp1_contact_id?: string | null
+      opp1_user_id?: string | null
+      opp2_contact_id?: string | null
+      opp2_user_id?: string | null
+      winner: 'me' | 'opp1' | 'opp2'
+      notes: string | null
+    }
+  | {
+      type: 'doubles'
+      match_date: string
+      partner_contact_id?: string | null
+      partner_user_id?: string | null
+      opp1_contact_id?: string | null
+      opp1_user_id?: string | null
+      opp2_contact_id?: string | null
+      opp2_user_id?: string | null
+      winning_team: 'mine' | 'theirs'
+      notes: string | null
+    }
 
 export function useMatches() {
   const [matches, setMatches] = useState<Match[]>([])
@@ -56,18 +81,7 @@ export function useMatches() {
     const { data: u } = await supabase.auth.getUser()
     const me = u.user?.id
     if (!me) throw new Error('Not authenticated')
-    const row = {
-      league_id: input.league_id ?? null,
-      match_date: input.match_date,
-      player1_user_id: me,
-      player1_contact_id: null,
-      player2_user_id: input.opponent_user_id ?? null,
-      player2_contact_id: input.opponent_user_id ? null : (input.opponent_contact_id ?? null),
-      player1_games_won: input.your_games,
-      player2_games_won: input.their_games,
-      notes: input.notes,
-      entered_by: me,
-    }
+    const row = buildMatchRow(input, me)
     const { data, error } = await supabase.from('matches').insert(row).select().single()
     if (error) throw error
     setMatches((prev) => [data as Match, ...prev])

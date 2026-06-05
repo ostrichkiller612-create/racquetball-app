@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/useAuth'
 import { useContacts } from '../contacts/useContacts'
 import { useMatches, type Match } from './useMatches'
-import { summarizeHeadToHead, type MatchSummary } from '../lib/scoring'
+import { summarizeHeadToHead, type MatchSummary, didIWin } from '../lib/scoring'
 import { MatchHistory } from './MatchHistory'
 
 function toSummary(matches: Match[], userId: string, contactsById: Map<string, { name: string }>): MatchSummary[] {
   return matches
+    .filter((m) => m.match_type === 'singles')
     .map((m) => {
       const youArePlayer1 = m.player1_user_id === userId
       if (!youArePlayer1 && m.player2_user_id !== userId) return null
@@ -49,15 +50,25 @@ export function Stats() {
     <div className="p-4 space-y-4">
       <h1 className="text-xl font-semibold">Stats</h1>
 
-      <div className="bg-white rounded-2xl shadow p-4">
-        <div className="text-sm text-slate-500">Overall</div>
-        <div className="text-2xl font-bold">
-          {summary.overall.wins}–{summary.overall.losses}
-        </div>
-        <div className="text-xs text-slate-500">
-          {summary.overall.played} match{summary.overall.played === 1 ? '' : 'es'} played
-        </div>
-      </div>
+      {(() => {
+        const wins = matches.filter((m) => didIWin(m, userId)).length
+        const losses = matches.filter((m) =>
+          !didIWin(m, userId) && (
+            m.player1_user_id === userId || m.player2_user_id === userId ||
+            m.player3_user_id === userId || m.player4_user_id === userId
+          )
+        ).length
+        const played = wins + losses
+        return (
+          <div className="bg-white rounded-2xl shadow p-4">
+            <div className="text-sm text-slate-500">Overall</div>
+            <div className="text-2xl font-bold">{wins}–{losses}</div>
+            <div className="text-xs text-slate-500">
+              {played} match{played === 1 ? '' : 'es'} played
+            </div>
+          </div>
+        )
+      })()}
 
       {summary.perOpponent.length > 0 && (
         <div className="bg-white rounded-2xl shadow">

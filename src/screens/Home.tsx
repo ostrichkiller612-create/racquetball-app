@@ -3,6 +3,7 @@ import { useContacts } from '../contacts/useContacts'
 import { useMatches } from '../matches/useMatches'
 import { MatchHistory } from '../matches/MatchHistory'
 import { ThisWeekCard } from '../home/ThisWeekCard'
+import { didIWin } from '../lib/scoring'
 
 export function Home() {
   const { session } = useAuth()
@@ -13,11 +14,13 @@ export function Home() {
   if (!userId || matchesLoading) return <div className="p-4">Loading…</div>
 
   const contactsById = new Map(contacts.map((c) => [c.id, c]))
-  const wins = matches.filter((m) =>
-    (m.player1_user_id === userId ? m.player1_games_won : m.player2_games_won) >
-    (m.player1_user_id === userId ? m.player2_games_won : m.player1_games_won)
+  const wins = matches.filter((m) => didIWin(m, userId)).length
+  const losses = matches.filter((m) =>
+    !didIWin(m, userId) && (
+      m.player1_user_id === userId || m.player2_user_id === userId ||
+      m.player3_user_id === userId || m.player4_user_id === userId
+    )
   ).length
-  const losses = matches.length - wins
 
   return (
     <div className="p-4 space-y-4">
