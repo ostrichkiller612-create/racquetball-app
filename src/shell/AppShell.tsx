@@ -7,6 +7,8 @@ import { Share } from '../screens/Share'
 import { More } from '../screens/More'
 import { Contacts } from '../contacts/Contacts'
 import { ImportContacts } from '../contacts/ImportContacts'
+import { Leagues } from '../leagues/Leagues'
+import { League } from '../leagues/League'
 import { CourtBackground } from '../ui/CourtBackground'
 
 export function AppShell() {
@@ -21,6 +23,8 @@ export function AppShell() {
         <Route path="/more" element={<More />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/contacts/import" element={<ImportContacts />} />
+        <Route path="/leagues" element={<Leagues />} />
+        <Route path="/leagues/:id" element={<League />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <BottomNav />
