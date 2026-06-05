@@ -20,6 +20,14 @@ vi.mock('../src/contacts/useContacts', () => ({
   }),
 }))
 
+vi.mock('../src/leagues/useLeagues', () => ({
+  useLeagues: () => ({ leagues: [], loading: false }),
+}))
+
+vi.mock('../src/leagues/useLeagueMembers', () => ({
+  useLeagueMembers: () => ({ members: [], loading: false }),
+}))
+
 function renderUi() {
   return render(<MemoryRouter><LogMatch /></MemoryRouter>)
 }

@@ -18,6 +18,7 @@ export type Match = {
 
 export type NewMatchInput = {
   match_date: string
+  league_id?: string | null
   opponent_contact_id?: string | null
   opponent_user_id?: string | null
   your_games: number
@@ -50,7 +51,7 @@ export function useMatches() {
     const me = u.user?.id
     if (!me) throw new Error('Not authenticated')
     const row = {
-      league_id: null,
+      league_id: input.league_id ?? null,
       match_date: input.match_date,
       player1_user_id: me,
       player1_contact_id: null,
