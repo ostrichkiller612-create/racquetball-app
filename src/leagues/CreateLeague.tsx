@@ -17,7 +17,13 @@ export function CreateLeague({ onSubmit, onCancel, defaultName }: {
     try {
       await onSubmit(name.trim(), creatorName.trim() || 'Me')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create')
+      console.error('Create league failed:', err)
+      const msg = err instanceof Error
+        ? err.message
+        : (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message: unknown }).message === 'string')
+          ? (err as { message: string }).message
+          : JSON.stringify(err)
+      setError(`Failed to create: ${msg}`)
     } finally {
       setSaving(false)
     }
