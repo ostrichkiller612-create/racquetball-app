@@ -31,6 +31,15 @@ export function League() {
         <span className="w-10" />
       </div>
 
+      {isAdmin && (
+        <Link
+          to={`/leagues/${id}/import`}
+          className="block bg-white rounded-2xl shadow p-3 text-center font-medium text-emerald-700"
+        >
+          📄 Import roster + schedule
+        </Link>
+      )}
+
       <Standings leagueId={id} members={members} />
 
       <ScheduleEditor leagueId={id} members={members} isAdmin={isAdmin} />
