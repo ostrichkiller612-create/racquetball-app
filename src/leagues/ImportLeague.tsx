@@ -22,6 +22,7 @@ export function ImportLeague() {
   const [error, setError] = useState<string | null>(null)
   const [parsedRoster, setParsedRoster] = useState<ParsedRosterEntry[]>([])
   const [parsedSchedule, setParsedSchedule] = useState<ParsedScheduleRow[]>([])
+  const [rawText, setRawText] = useState<{ roster: string; schedule: string }>({ roster: '', schedule: '' })
 
   async function handleFile(file: File) {
     setError(null)
@@ -44,6 +45,7 @@ export function ImportLeague() {
         scheduleText = data.text
       }
 
+      setRawText({ roster: rosterText, schedule: scheduleText })
       setParsedRoster(parseRosterText(rosterText))
       setParsedSchedule(parseScheduleText(scheduleText, year))
       setStage('review')
@@ -123,14 +125,29 @@ export function ImportLeague() {
       )}
 
       {stage === 'review' && (
-        <ImportReview
-          leagueId={id}
-          year={year}
-          parsedRoster={parsedRoster}
-          parsedSchedule={parsedSchedule}
-          existingMembers={existingMembers}
-          onCancel={() => setStage('pick')}
-        />
+        <>
+          <ImportReview
+            leagueId={id}
+            year={year}
+            parsedRoster={parsedRoster}
+            parsedSchedule={parsedSchedule}
+            existingMembers={existingMembers}
+            onCancel={() => setStage('pick')}
+          />
+          <details className="text-xs text-slate-300">
+            <summary>Raw text (debug)</summary>
+            <div className="mt-2 space-y-2">
+              <div className="bg-white rounded p-2">
+                <div className="text-slate-500 text-xs font-medium mb-1">Roster page text</div>
+                <pre className="whitespace-pre-wrap text-slate-700">{rawText.roster}</pre>
+              </div>
+              <div className="bg-white rounded p-2">
+                <div className="text-slate-500 text-xs font-medium mb-1">Schedule page text</div>
+                <pre className="whitespace-pre-wrap text-slate-700">{rawText.schedule}</pre>
+              </div>
+            </div>
+          </details>
+        </>
       )}
     </div>
   )

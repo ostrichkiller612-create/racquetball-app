@@ -58,13 +58,31 @@ export function parseRosterText(text: string): ParsedRosterEntry[] {
   return rows
 }
 
+// Words that show up as column headers or footers on league sheets and
+// shouldn't leak into a name. Matches at word boundary, case-insensitive.
+const HEADER_WORDS = [
+  'Name', 'Phone', 'Player', 'Roster', 'Total', 'Points', 'Final', 'Ranking',
+  'Week', 'Match', 'League', 'Court', 'Time', 'Date', 'Email', 'Standings',
+  'Score', 'Wins', 'Losses', 'Address', 'PLEASE', 'REMEMBER', 'MARK', 'YOUR',
+  'SCORES', 'SHEET', 'NOTE', 'NOTES',
+]
+const HEADER_RE = new RegExp(
+  `^(?:${HEADER_WORDS.join('|')})\\b[:\\s]*`,
+  'i',
+)
+
 function cleanName(raw: string): string {
   let s = raw.replace(/\r/g, '').split('\n').pop() ?? raw
   s = s.replace(/^\s*\d{1,3}[\s.):|\-–—]+/, '')
   s = s.replace(/\s+/g, ' ').trim()
   s = s.replace(/[\s,.;:|\-–—]+$/g, '').trim()
   s = s.replace(/^[\s,.;:|\-–—]+/, '').trim()
-  s = s.replace(/^(Name|Phone|Player|Roster)\b[:\s]*/i, '').trim()
+  // Strip leading header words, possibly several in a row (e.g. "Phone Name Bob")
+  let prev: string
+  do {
+    prev = s
+    s = s.replace(HEADER_RE, '').trim()
+  } while (s !== prev)
   return s
 }
 
