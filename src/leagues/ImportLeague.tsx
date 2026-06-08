@@ -48,7 +48,11 @@ export function ImportLeague() {
       setParsedSchedule(parseScheduleText(scheduleText, year))
       setStage('review')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse file')
+      console.error('Import parse failed:', err)
+      const msg = err instanceof Error
+        ? `${err.name}: ${err.message}`
+        : String(err)
+      setError(`Parse failed — ${msg}`)
       setStage('pick')
     }
   }

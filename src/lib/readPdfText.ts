@@ -1,12 +1,13 @@
 import * as pdfjsLib from 'pdfjs-dist'
-// Vite-native worker URL. Bundled into the output.
-import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url'
+// Vite-native worker import: gives us a constructor for a real Web Worker.
+// This is more reliable on Vercel than `?url` because it avoids cross-origin
+// module-script issues.
+import PdfWorker from 'pdfjs-dist/build/pdf.worker.mjs?worker'
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl
+pdfjsLib.GlobalWorkerOptions.workerPort = new PdfWorker()
 
 /**
  * Reads a PDF file and returns one string per page (concatenated text content).
- * pdfjs-dist returns text items in document order; we join with spaces.
  */
 export async function readPdfText(file: File): Promise<string[]> {
   const buf = await file.arrayBuffer()
