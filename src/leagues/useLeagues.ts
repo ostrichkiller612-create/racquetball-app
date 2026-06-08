@@ -55,5 +55,11 @@ export function useLeagues() {
     return league as League
   }, [])
 
-  return { leagues, loading, error, createLeague, reload }
+  const deleteLeague = useCallback(async (id: string) => {
+    const { error } = await supabase.from('leagues').delete().eq('id', id)
+    if (error) throw error
+    setLeagues((prev) => prev.filter((l) => l.id !== id))
+  }, [])
+
+  return { leagues, loading, error, createLeague, deleteLeague, reload }
 }

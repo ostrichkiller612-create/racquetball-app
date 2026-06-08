@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { useLeagues } from './useLeagues'
 import { useLeagueMembers } from './useLeagueMembers'
@@ -10,9 +10,11 @@ import { ScheduleEditor } from './ScheduleEditor'
 export function League() {
   const { id } = useParams<{ id: string }>()
   const { session } = useAuth()
-  const { leagues } = useLeagues()
+  const { leagues, deleteLeague } = useLeagues()
   const { members, loading, addMember, deleteMember } = useLeagueMembers(id ?? null)
   const [adding, setAdding] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const league = leagues.find((l) => l.id === id)
   const myId = session?.user.id
@@ -101,6 +103,33 @@ export function League() {
           </ul>
         )}
       </div>
+
+      {isAdmin && (
+        <div className="bg-white rounded-2xl shadow p-3 space-y-2">
+          {deleteError && <p className="text-red-600 text-sm">{deleteError}</p>}
+          <button
+            onClick={async () => {
+              if (!league) return
+              if (!confirm(`Delete league "${league.name}"? This removes the roster and schedule. Match history is preserved as casual.`)) return
+              try {
+                await deleteLeague(league.id)
+                navigate('/leagues')
+              } catch (err) {
+                console.error('Delete league failed:', err)
+                const msg = err instanceof Error
+                  ? err.message
+                  : (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message: unknown }).message === 'string')
+                    ? (err as { message: string }).message
+                    : JSON.stringify(err)
+                setDeleteError(`Delete failed: ${msg}`)
+              }
+            }}
+            className="w-full text-red-600 font-medium py-2"
+          >
+            Delete league
+          </button>
+        </div>
+      )}
     </div>
   )
 }
