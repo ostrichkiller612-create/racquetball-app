@@ -102,7 +102,10 @@ export function ImportReview({
           })
           .select('id, seed_number')
           .single()
-        if (insErr) throw insErr
+        if (insErr) {
+          console.error('Member insert failed:', insErr, 'row:', m)
+          throw new Error(`Member "${m.name}" (seed ${m.seed}): ${insErr.message ?? insErr.code ?? JSON.stringify(insErr)}`)
+        }
         insertedById.set(data.seed_number, data.id)
       }
 
@@ -125,14 +128,32 @@ export function ImportReview({
           player2_member_id: seedToId.get(s.p2Seed) ?? null,
         }))
 
-      if (toInsert.length > 0) {
-        const { error: schedErr } = await supabase.from('league_schedule').insert(toInsert)
-        if (schedErr) throw schedErr
+      // Warn about schedule rows that reference seeds we couldn't resolve
+      const unresolved = toInsert.filter(
+        (r) => !r.player1_member_id || !r.player2_member_id,
+      )
+      if (unresolved.length > 0) {
+        console.warn(`${unresolved.length} schedule rows have unresolved seeds and will be skipped.`)
+      }
+      const resolved = toInsert.filter(
+        (r) => r.player1_member_id && r.player2_member_id,
+      )
+
+      if (resolved.length > 0) {
+        const { error: schedErr } = await supabase.from('league_schedule').insert(resolved)
+        if (schedErr) {
+          console.error('Schedule insert failed:', schedErr, 'first row:', resolved[0])
+          throw new Error(
+            `Schedule insert: ${schedErr.message ?? schedErr.code ?? JSON.stringify(schedErr)}`,
+          )
+        }
       }
 
       navigate(`/leagues/${leagueId}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
+      console.error('Save failed:', err)
+      const msg = err instanceof Error ? err.message : JSON.stringify(err)
+      setError(`Save failed — ${msg}`)
       setSaving(false)
     }
   }
