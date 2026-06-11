@@ -10,6 +10,8 @@ export type LeagueMember = {
   phone: string | null
   email: string | null
   role: 'admin' | 'member'
+  board_points?: number | null
+  board_updated_at?: string | null
 }
 
 export type NewMember = {

@@ -47,6 +47,12 @@ export function League() {
           >
             🔗 Match results to schedule
           </Link>
+          <Link
+            to={`/leagues/${id}/board`}
+            className="block bg-white rounded-2xl shadow p-3 text-center font-medium text-emerald-700"
+          >
+            🏷 Board points
+          </Link>
         </div>
       )}
 

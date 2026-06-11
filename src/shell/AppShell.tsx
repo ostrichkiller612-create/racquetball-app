@@ -11,6 +11,7 @@ import { Leagues } from '../leagues/Leagues'
 import { League } from '../leagues/League'
 import { ImportLeague } from '../leagues/ImportLeague'
 import { LinkMatches } from '../leagues/LinkMatches'
+import { BoardPoints } from '../leagues/BoardPoints'
 import { ProfileEdit } from '../profile/ProfileEdit'
 import { CourtBackground } from '../ui/CourtBackground'
 
@@ -30,6 +31,7 @@ export function AppShell() {
         <Route path="/leagues/:id" element={<League />} />
         <Route path="/leagues/:id/import" element={<ImportLeague />} />
         <Route path="/leagues/:id/link" element={<LinkMatches />} />
+        <Route path="/leagues/:id/board" element={<BoardPoints />} />
         <Route path="/profile" element={<ProfileEdit />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

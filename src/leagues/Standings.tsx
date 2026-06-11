@@ -116,6 +116,30 @@ export function Standings({ leagueId, members }: { leagueId: string; members: Le
     return <div className="bg-white rounded-2xl shadow p-3 text-sm">Loading standings…</div>
   }
 
+  // When the league has official board totals, they take over the ranking;
+  // the app-computed points show small for comparison.
+  const boardById = new Map(
+    members
+      .filter((m) => m.board_points != null)
+      .map((m) => [m.id, m.board_points as number]),
+  )
+  const hasBoard = boardById.size > 0
+  const displayRows = hasBoard
+    ? [...rows].sort((a, b) => {
+        const ba = boardById.get(a.id)
+        const bb = boardById.get(b.id)
+        if (ba != null && bb != null && bb !== ba) return bb - ba
+        if (ba != null && bb == null) return -1
+        if (ba == null && bb != null) return 1
+        return b.points - a.points || a.name.localeCompare(b.name)
+      })
+    : rows
+  const boardUpdated = members
+    .map((m) => m.board_updated_at)
+    .filter((x): x is string => !!x)
+    .sort()
+    .pop()
+
   return (
     <div className="bg-white rounded-2xl shadow">
       <div className="px-4 py-2 text-sm font-medium text-slate-600 border-b">Standings</div>
@@ -130,17 +154,36 @@ export function Standings({ leagueId, members }: { leagueId: string; members: Le
           </tr>
         </thead>
         <tbody>
-          {rows.map((r, i) => (
-            <tr key={r.id} className="border-t border-slate-100">
-              <td className="px-3 py-1.5">{i + 1}</td>
-              <td className="px-3 py-1.5 font-medium">{r.name}</td>
-              <td className="px-3 py-1.5 text-right">{r.played}</td>
-              <td className="px-3 py-1.5 text-right">{r.wins}-{r.losses}</td>
-              <td className="px-3 py-1.5 text-right font-semibold">{r.points}</td>
-            </tr>
-          ))}
+          {displayRows.map((r, i) => {
+            const board = boardById.get(r.id)
+            return (
+              <tr key={r.id} className="border-t border-slate-100">
+                <td className="px-3 py-1.5">{i + 1}</td>
+                <td className="px-3 py-1.5 font-medium">{r.name}</td>
+                <td className="px-3 py-1.5 text-right">{r.played}</td>
+                <td className="px-3 py-1.5 text-right">{r.wins}-{r.losses}</td>
+                <td className="px-3 py-1.5 text-right font-semibold">
+                  {hasBoard ? (
+                    <>
+                      {board ?? '—'}
+                      <span className="ml-1 text-xs font-normal text-slate-400">
+                        app {r.points}
+                      </span>
+                    </>
+                  ) : (
+                    r.points
+                  )}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
+      {hasBoard && boardUpdated && (
+        <div className="px-4 py-1.5 text-xs text-slate-400 border-t">
+          Board updated {boardUpdated.slice(0, 10)}
+        </div>
+      )}
     </div>
   )
 }
