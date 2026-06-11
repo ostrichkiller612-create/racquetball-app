@@ -34,12 +34,20 @@ export function League() {
       </div>
 
       {isAdmin && (
-        <Link
-          to={`/leagues/${id}/import`}
-          className="block bg-white rounded-2xl shadow p-3 text-center font-medium text-emerald-700"
-        >
-          📄 Import roster + schedule
-        </Link>
+        <div className="space-y-2">
+          <Link
+            to={`/leagues/${id}/import`}
+            className="block bg-white rounded-2xl shadow p-3 text-center font-medium text-emerald-700"
+          >
+            📄 Import roster + schedule
+          </Link>
+          <Link
+            to={`/leagues/${id}/link`}
+            className="block bg-white rounded-2xl shadow p-3 text-center font-medium text-emerald-700"
+          >
+            🔗 Match results to schedule
+          </Link>
+        </div>
       )}
 
       <Standings leagueId={id} members={members} />

@@ -1,6 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabase'
 import { useLeagueSchedule } from './useLeagueSchedule'
 import type { LeagueMember } from './useLeagueMembers'
+
+type LinkedResult = {
+  player1_user_id: string | null
+  player2_user_id: string | null
+  player1_games_won: number
+  player2_games_won: number
+}
 
 export function ScheduleEditor({ leagueId, members, isAdmin }: {
   leagueId: string
@@ -8,6 +16,31 @@ export function ScheduleEditor({ leagueId, members, isAdmin }: {
   isAdmin: boolean
 }) {
   const { schedule, loading, addRow, deleteRow } = useLeagueSchedule(leagueId)
+  const [resultsById, setResultsById] = useState<Map<string, LinkedResult>>(new Map())
+
+  useEffect(() => {
+    const ids = schedule.map((s) => s.match_id).filter((x): x is string => x !== null)
+    if (ids.length === 0) {
+      setResultsById(new Map())
+      return
+    }
+    let active = true
+    supabase
+      .from('matches')
+      .select('id, player1_user_id, player2_user_id, player1_games_won, player2_games_won')
+      .in('id', ids)
+      .then(({ data }) => {
+        if (!active) return
+        setResultsById(
+          new Map(
+            ((data ?? []) as Array<LinkedResult & { id: string }>).map((m) => [m.id, m]),
+          ),
+        )
+      })
+    return () => {
+      active = false
+    }
+  }, [schedule])
   const [adding, setAdding] = useState(false)
   const [weekNumber, setWeekNumber] = useState(1)
   const [matchDate, setMatchDate] = useState('')
@@ -167,6 +200,25 @@ export function ScheduleEditor({ leagueId, members, isAdmin }: {
           {schedule.map((s) => {
             const p1m = s.player1_member_id ? memberById.get(s.player1_member_id) : null
             const p2m = s.player2_member_id ? memberById.get(s.player2_member_id) : null
+            const result = s.match_id ? resultsById.get(s.match_id) : null
+            // Orient the score to the schedule's player1 when possible.
+            let chip: string | null = null
+            if (result) {
+              let g1 = result.player1_games_won
+              let g2 = result.player2_games_won
+              if (
+                p1m?.user_id &&
+                result.player2_user_id === p1m.user_id
+              ) {
+                ;[g1, g2] = [g2, g1]
+              } else if (
+                p2m?.user_id &&
+                result.player1_user_id === p2m.user_id
+              ) {
+                ;[g1, g2] = [g2, g1]
+              }
+              chip = `${g1}–${g2}`
+            }
             return (
               <li key={s.id} className="px-4 py-2 text-sm flex items-center justify-between">
                 <div>
@@ -180,16 +232,21 @@ export function ScheduleEditor({ leagueId, members, isAdmin }: {
                     {p2m ? `#${p2m.seed_number} ${p2m.name}` : '(?)'}
                   </div>
                 </div>
-                {isAdmin && (
-                  <button
-                    onClick={() => {
-                      if (confirm('Delete this match?')) deleteRow(s.id)
-                    }}
-                    className="text-red-600 text-xs"
-                  >
-                    Delete
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {chip && (
+                    <span className="text-emerald-700 font-semibold">{chip} ✓</span>
+                  )}
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        if (confirm('Delete this match?')) deleteRow(s.id)
+                      }}
+                      className="text-red-600 text-xs"
+                    >
+                      Delete
+                    </button>
+                  )}
+                </div>
               </li>
             )
           })}

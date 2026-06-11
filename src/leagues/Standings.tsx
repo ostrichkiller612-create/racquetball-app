@@ -1,7 +1,21 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { leagueStandings, type LeagueStanding } from '../lib/scoring'
+import { leagueStandings, type LeagueStanding, type LeagueMatchInput } from '../lib/scoring'
 import type { LeagueMember } from './useLeagueMembers'
+
+type MatchRecord = {
+  id: string
+  player1_user_id: string | null
+  player2_user_id: string | null
+  player1_games_won: number
+  player2_games_won: number
+}
+
+type LinkRecord = {
+  match_id: string | null
+  player1_member_id: string | null
+  player2_member_id: string | null
+}
 
 export function Standings({ leagueId, members }: { leagueId: string; members: LeagueMember[] }) {
   const [rows, setRows] = useState<LeagueStanding[]>([])
@@ -10,36 +24,89 @@ export function Standings({ leagueId, members }: { leagueId: string; members: Le
   useEffect(() => {
     let active = true
     setLoading(true)
-    supabase
-      .from('matches')
-      .select('*')
-      .eq('league_id', leagueId)
-      .then(({ data }) => {
-        if (!active) return
-        const memberByUser = new Map(
-          members.filter((m) => m.user_id).map((m) => [m.user_id!, m]),
-        )
-        const matchInputs = (data ?? [])
-          .map((m) => {
-            const p1 = m.player1_user_id ? memberByUser.get(m.player1_user_id) : undefined
-            const p2 = m.player2_user_id ? memberByUser.get(m.player2_user_id) : undefined
-            if (!p1 || !p2) return null
-            return {
-              player1_id: p1.id,
-              player2_id: p2.id,
-              player1_games: m.player1_games_won as number,
-              player2_games: m.player2_games_won as number,
-            }
-          })
-          .filter((x): x is NonNullable<typeof x> => x !== null)
-        setRows(
-          leagueStandings(
-            members.map((m) => ({ id: m.id, name: m.name, seed_number: m.seed_number })),
-            matchInputs,
-          ),
-        )
-        setLoading(false)
-      })
+    ;(async () => {
+      const [{ data: matches }, { data: links }] = await Promise.all([
+        supabase.from('matches').select('*').eq('league_id', leagueId),
+        supabase
+          .from('league_schedule')
+          .select('match_id, player1_member_id, player2_member_id')
+          .eq('league_id', leagueId)
+          .not('match_id', 'is', null),
+      ])
+      if (!active) return
+
+      const matchById = new Map(
+        ((matches ?? []) as MatchRecord[]).map((m) => [m.id, m]),
+      )
+      const memberById = new Map(members.map((m) => [m.id, m]))
+      const memberByUser = new Map(
+        members.filter((m) => m.user_id).map((m) => [m.user_id!, m]),
+      )
+
+      const inputs: LeagueMatchInput[] = []
+      const counted = new Set<string>()
+
+      // 1. Schedule-linked matches: attribution comes from the schedule row's
+      //    members, which works even when an opponent is contact-based.
+      for (const link of (links ?? []) as LinkRecord[]) {
+        if (!link.match_id || !link.player1_member_id || !link.player2_member_id) continue
+        const match = matchById.get(link.match_id)
+        if (!match || counted.has(match.id)) continue
+        const m1 = memberById.get(link.player1_member_id)
+        const m2 = memberById.get(link.player2_member_id)
+        if (!m1 || !m2) continue
+
+        // Orient: which schedule member is the match's player1?
+        let p1Games: number
+        let p2Games: number
+        if (match.player1_user_id && m1.user_id === match.player1_user_id) {
+          p1Games = match.player1_games_won
+          p2Games = match.player2_games_won
+        } else if (match.player1_user_id && m2.user_id === match.player1_user_id) {
+          p1Games = match.player2_games_won
+          p2Games = match.player1_games_won
+        } else if (match.player2_user_id && m1.user_id === match.player2_user_id) {
+          p1Games = match.player2_games_won
+          p2Games = match.player1_games_won
+        } else if (match.player2_user_id && m2.user_id === match.player2_user_id) {
+          p1Games = match.player1_games_won
+          p2Games = match.player2_games_won
+        } else {
+          continue // can't determine orientation — don't guess
+        }
+
+        counted.add(match.id)
+        inputs.push({
+          player1_id: m1.id,
+          player2_id: m2.id,
+          player1_games: p1Games,
+          player2_games: p2Games,
+        })
+      }
+
+      // 2. Remaining league matches where both players have user accounts.
+      for (const m of (matches ?? []) as MatchRecord[]) {
+        if (counted.has(m.id)) continue
+        const p1 = m.player1_user_id ? memberByUser.get(m.player1_user_id) : undefined
+        const p2 = m.player2_user_id ? memberByUser.get(m.player2_user_id) : undefined
+        if (!p1 || !p2) continue
+        counted.add(m.id)
+        inputs.push({
+          player1_id: p1.id,
+          player2_id: p2.id,
+          player1_games: m.player1_games_won,
+          player2_games: m.player2_games_won,
+        })
+      }
+
+      setRows(
+        leagueStandings(
+          members.map((m) => ({ id: m.id, name: m.name, seed_number: m.seed_number })),
+          inputs,
+        ),
+      )
+      setLoading(false)
+    })()
     return () => {
       active = false
     }
