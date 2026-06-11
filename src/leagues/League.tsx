@@ -6,13 +6,15 @@ import { useLeagueMembers } from './useLeagueMembers'
 import { MemberForm } from './MemberForm'
 import { Standings } from './Standings'
 import { ScheduleEditor } from './ScheduleEditor'
+import { InviteCard } from './InviteCard'
 
 export function League() {
   const { id } = useParams<{ id: string }>()
   const { session } = useAuth()
   const { leagues, deleteLeague } = useLeagues()
-  const { members, loading, addMember, deleteMember } = useLeagueMembers(id ?? null)
+  const { members, loading, addMember, updateMember, deleteMember } = useLeagueMembers(id ?? null)
   const [adding, setAdding] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const navigate = useNavigate()
 
@@ -56,6 +58,8 @@ export function League() {
         </div>
       )}
 
+      <InviteCard leagueId={id} />
+
       <Standings leagueId={id} members={members} />
 
       <ScheduleEditor leagueId={id} members={members} isAdmin={isAdmin} />
@@ -88,29 +92,55 @@ export function League() {
         ) : (
           <ul className="divide-y divide-slate-100">
             {members.map((m) => (
-              <li
-                key={m.id}
-                className="px-4 py-2 flex items-center justify-between text-sm"
-              >
-                <div>
-                  <span className="text-slate-400 w-6 inline-block">#{m.seed_number}</span>
-                  <span className="font-medium">{m.name}</span>
-                  {m.user_id == null && (
-                    <span className="ml-2 text-xs text-slate-400">(invited)</span>
-                  )}
-                  {m.role === 'admin' && (
-                    <span className="ml-2 text-xs text-emerald-700">admin</span>
-                  )}
-                </div>
-                {isAdmin && m.user_id !== myId && (
-                  <button
-                    onClick={() => {
-                      if (confirm(`Remove ${m.name}?`)) deleteMember(m.id)
+              <li key={m.id} className="px-4 py-2 text-sm">
+                {editingId === m.id ? (
+                  <MemberForm
+                    defaultSeed={m.seed_number}
+                    initial={{
+                      seed_number: m.seed_number,
+                      name: m.name,
+                      phone: m.phone,
+                      email: m.email,
                     }}
-                    className="text-red-600 text-xs"
-                  >
-                    Remove
-                  </button>
+                    onSubmit={async (input) => {
+                      await updateMember(m.id, input)
+                      setEditingId(null)
+                    }}
+                    onCancel={() => setEditingId(null)}
+                  />
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-slate-400 w-6 inline-block">#{m.seed_number}</span>
+                      <span className="font-medium">{m.name}</span>
+                      {m.user_id == null && (
+                        <span className="ml-2 text-xs text-slate-400">(invited)</span>
+                      )}
+                      {m.role === 'admin' && (
+                        <span className="ml-2 text-xs text-emerald-700">admin</span>
+                      )}
+                    </div>
+                    {isAdmin && (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setEditingId(m.id)}
+                          className="text-emerald-700 text-xs"
+                        >
+                          Edit
+                        </button>
+                        {m.user_id !== myId && (
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remove ${m.name}?`)) deleteMember(m.id)
+                            }}
+                            className="text-red-600 text-xs"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 )}
               </li>
             ))}

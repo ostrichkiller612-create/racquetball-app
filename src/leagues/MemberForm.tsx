@@ -1,15 +1,16 @@
 import { useState } from 'react'
 import type { NewMember } from './useLeagueMembers'
 
-export function MemberForm({ onSubmit, onCancel, defaultSeed }: {
+export function MemberForm({ onSubmit, onCancel, defaultSeed, initial }: {
   onSubmit: (input: NewMember) => Promise<unknown>
   onCancel: () => void
   defaultSeed: number
+  initial?: NewMember
 }) {
-  const [seed, setSeed] = useState(defaultSeed)
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
+  const [seed, setSeed] = useState(initial?.seed_number ?? defaultSeed)
+  const [name, setName] = useState(initial?.name ?? '')
+  const [phone, setPhone] = useState(initial?.phone ?? '')
+  const [email, setEmail] = useState(initial?.email ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,7 +79,7 @@ export function MemberForm({ onSubmit, onCancel, defaultSeed }: {
           disabled={saving || !name.trim()}
           className="flex-1 rounded bg-emerald-600 text-white py-2 font-medium disabled:opacity-50"
         >
-          {saving ? 'Adding…' : 'Add'}
+          {saving ? 'Saving…' : initial ? 'Save' : 'Add'}
         </button>
         <button
           type="button"

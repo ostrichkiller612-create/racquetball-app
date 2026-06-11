@@ -64,11 +64,21 @@ export function useLeagueMembers(leagueId: string | null) {
     [leagueId],
   )
 
+  const updateMember = useCallback(async (id: string, patch: Partial<NewMember>) => {
+    const { error } = await supabase.from('league_members').update(patch).eq('id', id)
+    if (error) throw error
+    setMembers((prev) =>
+      prev
+        .map((m) => (m.id === id ? ({ ...m, ...patch } as LeagueMember) : m))
+        .sort((a, b) => a.seed_number - b.seed_number),
+    )
+  }, [])
+
   const deleteMember = useCallback(async (id: string) => {
     const { error } = await supabase.from('league_members').delete().eq('id', id)
     if (error) throw error
     setMembers((prev) => prev.filter((m) => m.id !== id))
   }, [])
 
-  return { members, loading, error, addMember, deleteMember, reload }
+  return { members, loading, error, addMember, updateMember, deleteMember, reload }
 }

@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { BottomNav } from './BottomNav'
 import { Home } from '../screens/Home'
 import { Log } from '../screens/Log'
@@ -12,10 +13,23 @@ import { League } from '../leagues/League'
 import { ImportLeague } from '../leagues/ImportLeague'
 import { LinkMatches } from '../leagues/LinkMatches'
 import { BoardPoints } from '../leagues/BoardPoints'
+import { EditMatch } from '../matches/EditMatch'
+import { PENDING_JOIN_KEY } from '../leagues/JoinLeague'
 import { ProfileEdit } from '../profile/ProfileEdit'
 import { CourtBackground } from '../ui/CourtBackground'
 
 export function AppShell() {
+  const navigate = useNavigate()
+
+  // Someone opened an invite link while signed out, then signed in — finish
+  // taking them to the claim screen.
+  useEffect(() => {
+    const pending = localStorage.getItem(PENDING_JOIN_KEY)
+    if (pending) {
+      navigate(`/join/${pending}`, { replace: true })
+    }
+  }, [navigate])
+
   return (
     <div className="min-h-full pb-16">
       <CourtBackground />
@@ -32,6 +46,7 @@ export function AppShell() {
         <Route path="/leagues/:id/import" element={<ImportLeague />} />
         <Route path="/leagues/:id/link" element={<LinkMatches />} />
         <Route path="/leagues/:id/board" element={<BoardPoints />} />
+        <Route path="/matches/:id" element={<EditMatch />} />
         <Route path="/profile" element={<ProfileEdit />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

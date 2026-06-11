@@ -84,8 +84,18 @@ export function useMatches() {
     const row = buildMatchRow(input, me)
     const { data, error } = await supabase.from('matches').insert(row).select().single()
     if (error) throw error
-    setMatches((prev) => [data as Match, ...prev])
-    return data as Match
+    const saved = data as Match
+    if (saved.league_id) {
+      // Best-effort: connect this match to its schedule slot. A failure here
+      // must never block the save.
+      supabase
+        .rpc('auto_link_match', { p_match: saved.id })
+        .then(({ error: linkErr }) => {
+          if (linkErr) console.warn('auto_link_match failed:', linkErr.message)
+        })
+    }
+    setMatches((prev) => [saved, ...prev])
+    return saved
   }, [])
 
   return { matches, loading, error, addMatch, reload }

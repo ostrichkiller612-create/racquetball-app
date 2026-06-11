@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { Match } from './useMatches'
 import type { Contact } from '../contacts/useContacts'
 import { didIWin } from '../lib/scoring'
@@ -56,14 +57,16 @@ export function MatchHistory({ matches, contactsById, userId }: {
         const { line, tag } = summarize(m, userId, contactsById)
         const won = didIWin(m, userId)
         return (
-          <li key={m.id} className="p-3 flex items-center justify-between">
-            <div>
-              <div className="text-sm text-slate-500">{m.match_date}</div>
-              <div className="font-medium">{line}</div>
-            </div>
-            <div className={`font-semibold ${won ? 'text-emerald-600' : 'text-slate-500'}`}>
-              {tag}
-            </div>
+          <li key={m.id}>
+            <Link to={`/matches/${m.id}`} className="p-3 flex items-center justify-between">
+              <div>
+                <div className="text-sm text-slate-500">{m.match_date}</div>
+                <div className="font-medium">{line}</div>
+              </div>
+              <div className={`font-semibold ${won ? 'text-emerald-600' : 'text-slate-500'}`}>
+                {tag}
+              </div>
+            </Link>
           </li>
         )
       })}
