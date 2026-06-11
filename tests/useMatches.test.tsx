@@ -59,6 +59,7 @@ describe('useMatches', () => {
     await waitFor(() => expect(result.current.loading).toBe(false))
     await act(async () => {
       await result.current.addMatch({
+        type: 'singles',
         match_date: '2026-06-04',
         opponent_contact_id: 'c-bob',
         your_games: 2,
@@ -67,13 +68,19 @@ describe('useMatches', () => {
       })
     })
     expect(insertCalls).toHaveBeenCalledWith(expect.objectContaining({
+      match_type: 'singles',
       match_date: '2026-06-04',
       player1_user_id: 'me',
       player1_contact_id: null,
       player2_user_id: null,
       player2_contact_id: 'c-bob',
+      player3_user_id: null,
+      player3_contact_id: null,
+      player4_user_id: null,
+      player4_contact_id: null,
       player1_games_won: 2,
       player2_games_won: 1,
+      winner_position: null,
       entered_by: 'me',
     }))
   })
