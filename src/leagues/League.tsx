@@ -7,6 +7,7 @@ import { MemberForm } from './MemberForm'
 import { Standings } from './Standings'
 import { ScheduleEditor } from './ScheduleEditor'
 import { InviteCard } from './InviteCard'
+import { ensureContacts } from './syncContacts'
 
 export function League() {
   const { id } = useParams<{ id: string }>()
@@ -16,7 +17,27 @@ export function League() {
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [syncNote, setSyncNote] = useState<string | null>(null)
   const navigate = useNavigate()
+
+  async function handleSyncContacts() {
+    setSyncNote(null)
+    try {
+      const added = await ensureContacts(
+        members
+          .filter((m) => m.user_id !== myId)
+          .map((m) => ({ name: m.name, phone: m.phone })),
+      )
+      setSyncNote(
+        added > 0
+          ? `Added ${added} member${added === 1 ? '' : 's'} to your contacts.`
+          : 'All members are already in your contacts.',
+      )
+    } catch (err) {
+      console.error('Contact sync failed:', err)
+      setSyncNote(err instanceof Error ? `Sync failed: ${err.message}` : 'Sync failed')
+    }
+  }
 
   const league = leagues.find((l) => l.id === id)
   const myId = session?.user.id
@@ -67,12 +88,18 @@ export function League() {
       <div className="bg-white rounded-2xl shadow">
         <div className="px-4 py-2 text-sm font-medium text-slate-600 border-b flex items-center justify-between">
           <span>Roster ({members.length})</span>
-          {isAdmin && !adding && (
-            <button onClick={() => setAdding(true)} className="text-emerald-700 text-sm">
-              + Add member
+          <div className="flex gap-3">
+            <button onClick={handleSyncContacts} className="text-emerald-700 text-sm">
+              → My contacts
             </button>
-          )}
+            {isAdmin && !adding && (
+              <button onClick={() => setAdding(true)} className="text-emerald-700 text-sm">
+                + Add member
+              </button>
+            )}
+          </div>
         </div>
+        {syncNote && <p className="px-4 py-1.5 text-xs text-slate-500 border-b">{syncNote}</p>}
 
         {adding && (
           <div className="p-3">

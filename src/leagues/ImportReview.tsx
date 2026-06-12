@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { ensureContacts } from './syncContacts'
 import type { ParsedRosterEntry } from '../lib/parseRosterText'
 import type { ParsedScheduleRow } from '../lib/parseScheduleText'
 import type { LeagueMember } from './useLeagueMembers'
@@ -147,6 +148,18 @@ export function ImportReview({
             `Schedule insert: ${schedErr.message ?? schedErr.code ?? JSON.stringify(schedErr)}`,
           )
         }
+      }
+
+      // Mirror the roster into the importer's contacts so match logging and
+      // name-based linking work out of the box. Best-effort.
+      try {
+        await ensureContacts(
+          members
+            .filter((m) => m.include && m.name.trim())
+            .map((m) => ({ name: m.name, phone: m.phone || null })),
+        )
+      } catch (err) {
+        console.warn('Contact sync after import failed:', err)
       }
 
       navigate(`/leagues/${leagueId}`)

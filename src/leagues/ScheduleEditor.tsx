@@ -15,7 +15,7 @@ export function ScheduleEditor({ leagueId, members, isAdmin }: {
   members: LeagueMember[]
   isAdmin: boolean
 }) {
-  const { schedule, loading, addRow, deleteRow } = useLeagueSchedule(leagueId)
+  const { schedule, loading, addRow, deleteRow, clearAll } = useLeagueSchedule(leagueId)
   const [resultsById, setResultsById] = useState<Map<string, LinkedResult>>(new Map())
 
   useEffect(() => {
@@ -87,11 +87,25 @@ export function ScheduleEditor({ leagueId, members, isAdmin }: {
     <div className="bg-white rounded-2xl shadow">
       <div className="px-4 py-2 text-sm font-medium text-slate-600 border-b flex items-center justify-between">
         <span>Schedule ({schedule.length})</span>
-        {isAdmin && !adding && (
-          <button onClick={() => setAdding(true)} className="text-emerald-700 text-sm">
-            + Add match
-          </button>
-        )}
+        <div className="flex gap-3">
+          {isAdmin && schedule.length > 0 && (
+            <button
+              onClick={() => {
+                if (confirm(`Delete all ${schedule.length} scheduled matches? Logged match results are kept.`)) {
+                  clearAll().catch((err) => alert(err instanceof Error ? err.message : 'Clear failed'))
+                }
+              }}
+              className="text-red-600 text-sm"
+            >
+              Clear all
+            </button>
+          )}
+          {isAdmin && !adding && (
+            <button onClick={() => setAdding(true)} className="text-emerald-700 text-sm">
+              + Add match
+            </button>
+          )}
+        </div>
       </div>
 
       {adding && (

@@ -83,5 +83,15 @@ export function useLeagueSchedule(leagueId: string | null) {
     setSchedule((prev) => prev.filter((r) => r.id !== id))
   }, [])
 
-  return { schedule, loading, error, addRow, updateRow, deleteRow, reload }
+  const clearAll = useCallback(async () => {
+    if (!leagueId) throw new Error('No league selected')
+    const { error } = await supabase
+      .from('league_schedule')
+      .delete()
+      .eq('league_id', leagueId)
+    if (error) throw error
+    setSchedule([])
+  }, [leagueId])
+
+  return { schedule, loading, error, addRow, updateRow, deleteRow, clearAll, reload }
 }
